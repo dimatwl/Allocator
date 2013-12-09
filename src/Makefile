@@ -1,14 +1,14 @@
 CC=g++
 CFLAGS=-Wall
 
-SOURCES = main.cpp
+SOURCES = main.cpp buffer_allocator.cpp
 OBJECTS = $(SOURCES:%.cpp=%.o)
 DEPS = make.dep
 TARGET = executable
 
 RM=rm -f
 
-all: $(TARGET)
+all: $(TARGET) $(clean_after_build)
 
 $(TARGET): $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS)
@@ -21,6 +21,9 @@ $(DEPS): $(SOURCES)
 	$(CC) -MM $(SOURCES) > $(DEPS)
 
 -include $(DEPS)
+
+clean_after_build:
+	$(RM) $(OBJECTS) $(DEPS)
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) $(DEPS)
