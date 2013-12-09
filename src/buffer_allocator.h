@@ -4,6 +4,7 @@
 #include <utility>
 #include <set>
 #include <new>
+#include <memory>
 
 namespace allocator_lib
 {
@@ -13,6 +14,7 @@ using std::pair;
 using std::make_pair;
 using std::set;
 using std::bad_alloc;
+using std::unique_ptr;
 
 template <typename element_type> class buffer_allocator
 {
@@ -21,6 +23,7 @@ public:
     typedef element_type const * const const_ptr_to_const;
     typedef const element_type& const_ref;
 
+    //bad_alloc can be thrown here.
     explicit buffer_allocator(const size_t capacity_);
     ~buffer_allocator();
 
@@ -33,7 +36,7 @@ public:
 private:
     typedef pair<void*, size_t> free_space_descriptor;
 
-    void* m_buffer;
+    unique_ptr<void> m_buffer;
     size_t m_size;
     size_t m_capacity;
     set<free_space_descriptor> m_free_space;
@@ -44,9 +47,12 @@ private:
 }; 
 
 template <typename element_type>
-buffer_allocator<element_type>::buffer_allocator(const size_t capacity_)
+buffer_allocator<element_type>::buffer_allocator(const size_t capacity_):
+    m_buffer(::operator new(capacity_ * sizeof(element_type))),
+    m_size(0), 
+    m_capacity(capacity_),
+    m_free_space()
 {
-
 }
 
 template <typename element_type>

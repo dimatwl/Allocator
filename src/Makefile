@@ -1,5 +1,5 @@
 CC=/opt/local/bin/g++-mp-4.8
-CFLAGS=-Wall
+CFLAGS=-Wall -std=c++11
 
 SOURCES = main.cpp buffer_allocator.cpp
 OBJECTS = $(SOURCES:%.cpp=%.o)
