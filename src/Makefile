@@ -1,4 +1,4 @@
-CC=g++
+CC=/opt/local/bin/g++-mp-4.8
 CFLAGS=-Wall
 
 SOURCES = main.cpp buffer_allocator.cpp
