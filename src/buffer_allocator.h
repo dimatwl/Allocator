@@ -53,12 +53,12 @@ buffer_allocator<element_type>::buffer_allocator(const size_t capacity_):
     m_capacity(capacity_),
     m_free_space()
 {
+    m_free_space.insert(make_pair(m_buffer.get(), capacity_));
 }
 
 template <typename element_type>
 buffer_allocator<element_type>::~buffer_allocator()
 {
-
 }
 
 template <typename element_type>
@@ -71,6 +71,31 @@ template <typename element_type>
 void buffer_allocator<element_type>::destroy(ptr address_) const
 {
     address_->~element_type();
+}
+
+template <typename element_type>
+typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new_element()
+{
+    auto free_position_iter = m_free_space.begin();
+    void* allocated_memory_address;
+    if (free_position_iter->second > 1)
+    {
+        allocated_memory_address = free_position_iter->first;
+        free_position_iter->first += sizeof(element_type);
+        free_position_iter->second -= 1;
+    }
+    else
+    {
+        allocated_memory_address = free_position_iter->first;
+        m_free_space.erase(free_position_iter);
+    }
+
+}
+
+template <typename element_type>
+void buffer_allocator<element_type>::delete_element(const_ptr_to_const element_)
+{
+
 }
 
 }
