@@ -34,9 +34,9 @@ public:
     void destroy(ptr address_) const;
 
 private:
-    typedef pair<void*, size_t> free_space_descriptor;
+    typedef pair<ptr, size_t> free_space_descriptor;
 
-    unique_ptr<void> m_buffer;
+    unique_ptr<element_type> m_buffer;
     size_t m_size;
     size_t m_capacity;
     set<free_space_descriptor> m_free_space;
@@ -48,7 +48,7 @@ private:
 
 template <typename element_type>
 buffer_allocator<element_type>::buffer_allocator(const size_t capacity_):
-    m_buffer(::operator new(capacity_ * sizeof(element_type))),
+    m_buffer(static_cast<ptr>(::operator new(capacity_ * sizeof(element_type)))),
     m_size(0), 
     m_capacity(capacity_),
     m_free_space()
@@ -76,20 +76,26 @@ void buffer_allocator<element_type>::destroy(ptr address_) const
 template <typename element_type>
 typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new_element()
 {
-    auto free_position_iter = m_free_space.begin();
-    void* allocated_memory_address;
-    if (free_position_iter->second > 1)
+    ptr allocated_memory_address = 0;
+    if (!m_free_space.empty())
     {
-        allocated_memory_address = free_position_iter->first;
-        free_position_iter->first += sizeof(element_type);
-        free_position_iter->second -= 1;
+        auto free_position_iter = m_free_space.begin();
+        if (free_position_iter->second > 1)
+        {
+            allocated_memory_address = free_position_iter->first;
+            auto descriptor = *free_position_iter;
+            m_free_space.erase(free_position_iter);
+            descriptor.first++;
+            descriptor.second--;
+            m_free_space.insert(descriptor);
+        }
+        else
+        {
+            allocated_memory_address = free_position_iter->first;
+            m_free_space.erase(free_position_iter);
+        }
     }
-    else
-    {
-        allocated_memory_address = free_position_iter->first;
-        m_free_space.erase(free_position_iter);
-    }
-
+    return allocated_memory_address;
 }
 
 template <typename element_type>
