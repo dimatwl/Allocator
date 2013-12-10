@@ -18,7 +18,7 @@ void test1()
     buffer_allocator<int> allocator(100);
     int* address1 = allocator.new_element();
     int* address2 = allocator.new_element();
-    printResult(address1 != address2, name);
+    printResult(address1 != address2 && allocator.get_number_of_descriptors() == 1, name);
 }
 
 void test2()
@@ -30,7 +30,7 @@ void test2()
     {
         addr_set.insert(allocator.new_element());
     }
-    printResult(addr_set.size() == 100 && addr_set.count(static_cast<int*>(0)) == 0, name);
+    printResult(addr_set.size() == 100 && addr_set.count(static_cast<int*>(0)) == 0 && allocator.get_number_of_descriptors() == 0, name);
 }
 
 void test3()
@@ -42,7 +42,7 @@ void test3()
     {
         addr_set.insert(allocator.new_element());
     }
-    printResult(addr_set.size() == 101 && addr_set.count(static_cast<int*>(0)) == 1 && allocator.new_element() == 0, name);
+    printResult(addr_set.size() == 101 && addr_set.count(static_cast<int*>(0)) == 1 && allocator.new_element() == 0 && allocator.get_number_of_descriptors() == 0, name);
 }
 
 void test4()
@@ -52,7 +52,7 @@ void test4()
     int* address = allocator.new_element();
     int magic_value = 123;
     allocator.construct(address, magic_value);
-    printResult(*address == magic_value, name);
+    printResult(*address == magic_value && allocator.get_number_of_descriptors() == 1, name);
 }
 
 void test5()
@@ -165,8 +165,7 @@ void test11()
     {
         allocator.delete_element(*iter);
     }
-    
-    printResult(allocator.new_element() != 0, name);
+    printResult(allocator.new_element() != 0  && allocator.get_number_of_descriptors() == 1, name);
 }
 
 void test12()
@@ -196,6 +195,8 @@ void test12()
         addr_set.count(static_cast<int*>(0)) == 0
         && 
         includes(addr_set.begin(), addr_set.end(), addr_set2.begin(), addr_set2.end())
+        &&
+        allocator.get_number_of_descriptors() == 0
         , 
         name
     );
@@ -228,6 +229,115 @@ void test13()
         addr_set2.count(static_cast<int*>(0)) == 1
         && 
         !includes(addr_set.begin(), addr_set.end(), addr_set2.begin(), addr_set2.end())
+        &&
+        allocator.get_number_of_descriptors() == 0
+        , 
+        name
+    );
+}
+
+void test14()
+{
+    string name = "Test14";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.begin(); iter != addr_set.end(); advance(iter, 2))
+    {
+        allocator.delete_element(*iter);
+    }
+    printResult
+    (
+        allocator.get_number_of_descriptors() == 50
+        , 
+        name
+    );
+}
+
+void test15()
+{
+    string name = "Test15";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.rbegin(); iter != addr_set.rend(); advance(iter, 2))
+    {
+        allocator.delete_element(*iter);
+    }
+    set<int*> addr_set2;
+    for (size_t i = 0; i < 50; ++i)
+    {
+        addr_set2.insert(allocator.new_element());
+    }
+    printResult
+    (
+        allocator.new_element() == 0 
+        && 
+        addr_set2.size() == 50
+        && 
+        addr_set.count(static_cast<int*>(0)) == 0
+        && 
+        includes(addr_set.begin(), addr_set.end(), addr_set2.begin(), addr_set2.end())
+        &&
+        allocator.get_number_of_descriptors() == 0
+        , 
+        name
+    );
+}
+
+void test16()
+{
+    string name = "Test16";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.rbegin(); iter != addr_set.rend(); advance(iter, 2))
+    {
+        allocator.delete_element(*iter);
+    }
+    printResult
+    (
+        allocator.get_number_of_descriptors() == 50
+        , 
+        name
+    );
+}
+
+void test17()
+{
+    string name = "Test17";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    advance(iter, 50);
+    allocator.delete_element(*iter);
+    size_t descr_count1 = allocator.get_number_of_descriptors();
+    advance(iter, 2);
+    allocator.delete_element(*iter);
+    size_t descr_count2 = allocator.get_number_of_descriptors();
+    advance(iter, -1);
+    allocator.delete_element(*iter);
+    size_t descr_count3 = allocator.get_number_of_descriptors();
+    printResult
+    (
+        descr_count1 == 1
+        &&
+        descr_count2 == 2
+        &&
+        descr_count3 == 1
         , 
         name
     );
@@ -247,5 +357,9 @@ int main (int argc, char** argv) {
     test11();
     test12();
     test13();
+    test14();
+    test15();
+    test16();
+    test17();
     return 0;
 }

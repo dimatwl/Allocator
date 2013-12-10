@@ -42,6 +42,9 @@ public:
     void construct(ptr address_, const_ref element_) const;
     void destroy(ptr address_) const;
 
+    //For testing only.
+    size_t get_number_of_descriptors() const;
+
 private:
     typedef pair<ptr_to_const, size_t> free_space_descriptor;
 
@@ -142,7 +145,7 @@ void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
         }
         if (lower_addr_iter != m_free_space.end())
         {
-            if (lower_addr_iter->first + lower_addr_iter->second + 1 == address_)
+            if (lower_addr_iter->first + lower_addr_iter->second == address_)
             {
                 new_free_position = summ_descriptors(new_free_position, lower_addr_iter);
             }
@@ -161,6 +164,12 @@ typename buffer_allocator<element_type>::free_space_descriptor buffer_allocator<
     auto result = make_pair(min(first_descriptor_.first, second_descriptor_iter->first), first_descriptor_.second + second_descriptor_iter->second);
     m_free_space.erase(second_descriptor_iter);
     return result;
+}
+
+template <typename element_type>
+size_t buffer_allocator<element_type>::get_number_of_descriptors() const
+{
+    return m_free_space.size();
 }
 
 }
