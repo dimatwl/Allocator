@@ -55,11 +55,45 @@ void test4()
     printResult(*address == magic_value, name);
 }
 
+void test5()
+{
+    string name = "Test5";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    int* freed_address = *iter;
+    allocator.delete_element(*iter);
+
+    printResult(allocator.new_element() == freed_address, name);
+}
+
+void test6()
+{
+    string name = "Test6";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    advance(iter, 20);
+    int* freed_address = *iter;
+    allocator.delete_element(*iter);
+
+    printResult(allocator.new_element() == freed_address, name);
+}
 
 int main (int argc, char** argv) {
     test1();
     test2();
     test3();
     test4();
+    test5();
+    test6();
     return 0;
 }

@@ -6,6 +6,7 @@
 #include <new>
 #include <memory>
 #include <algorithm>
+#include <iterator>
 
 namespace allocator_lib
 {
@@ -17,12 +18,15 @@ using std::set;
 using std::bad_alloc;
 using std::unique_ptr;
 using std::min;
+using std::prev;
+
 
 template <typename element_type> class buffer_allocator
 {
 public:
     typedef element_type* ptr;
     typedef element_type const * const const_ptr_to_const;
+    typedef element_type const * ptr_to_const;
     typedef const element_type& const_ref;
 
     //bad_alloc can be thrown here.
@@ -36,7 +40,7 @@ public:
     void destroy(ptr address_) const;
 
 private:
-    typedef pair<ptr, size_t> free_space_descriptor;
+    typedef pair<ptr_to_const, size_t> free_space_descriptor;
 
     unique_ptr<element_type> m_buffer;
     size_t m_size;
@@ -84,7 +88,7 @@ void buffer_allocator<element_type>::destroy(ptr address_) const
 template <typename element_type>
 typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new_element()
 {
-    ptr allocated_memory_address = 0;
+    ptr_to_const allocated_memory_address = 0;
     if (!m_free_space.empty())
     {
         auto free_position_iter = m_free_space.begin();
@@ -103,7 +107,7 @@ typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new
             m_free_space.erase(free_position_iter);
         }
     }
-    return allocated_memory_address;
+    return const_cast<ptr>(allocated_memory_address);
 }
 
 template <typename element_type>
@@ -111,7 +115,15 @@ void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
 {
     auto new_free_position = make_pair(address_, 1);
     auto greater_addr_iter = m_free_space.upper_bound(new_free_position);
-    auto lower_addr_iter = greater_addr_iter - 1;
+    auto lower_addr_iter = m_free_space.begin();
+    if (greater_addr_iter == m_free_space.begin())
+    {
+        lower_addr_iter = m_free_space.end();
+    }
+    else
+    {
+        lower_addr_iter = prev(greater_addr_iter);
+    }
     if (greater_addr_iter != m_free_space.end())
     {
         if (greater_addr_iter->first - 1 == address_)
@@ -119,7 +131,7 @@ void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
             new_free_position = summ_descriptors(new_free_position, greater_addr_iter);
         }
     }
-    if (lower_addr_iter != m_free_space.rend())
+    if (lower_addr_iter != m_free_space.end())
     {
         if (lower_addr_iter->first + lower_addr_iter->second + 1 == address_)
         {
