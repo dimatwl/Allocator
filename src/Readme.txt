@@ -1,0 +1,1 @@
+Please set CC variable in Makefile with path to compiler with support of c++11.
