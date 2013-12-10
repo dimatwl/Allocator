@@ -88,6 +88,151 @@ void test6()
     printResult(allocator.new_element() == freed_address, name);
 }
 
+void test7()
+{
+    string name = "Test7";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    advance(iter, 99);
+    int* freed_address = *iter;
+    allocator.delete_element(*iter);
+
+    printResult(allocator.new_element() == freed_address, name);
+}
+
+void test8()
+{
+    string name = "Test8";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    advance(iter, 100);
+    allocator.delete_element(*iter);
+
+    printResult(allocator.new_element() == 0, name);
+}
+
+void test9()
+{
+    string name = "Test9";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    advance(iter, 99);
+    int* freed_address = (*iter) + 1;
+    allocator.delete_element(freed_address);
+    printResult(allocator.new_element() == 0, name);
+}
+
+void test10()
+{
+    string name = "Test10";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    auto iter = addr_set.begin();
+    int* freed_address = (*iter) - 1;
+    allocator.delete_element(freed_address);
+    printResult(allocator.new_element() == 0, name);
+}
+
+void test11()
+{
+    string name = "Test11";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.begin(); iter != addr_set.end(); ++iter)
+    {
+        allocator.delete_element(*iter);
+    }
+    
+    printResult(allocator.new_element() != 0, name);
+}
+
+void test12()
+{
+    string name = "Test12";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.begin(); iter != addr_set.end(); advance(iter, 2))
+    {
+        allocator.delete_element(*iter);
+    }
+    set<int*> addr_set2;
+    for (size_t i = 0; i < 50; ++i)
+    {
+        addr_set2.insert(allocator.new_element());
+    }
+    printResult
+    (
+        allocator.new_element() == 0 
+        && 
+        addr_set2.size() == 50
+        && 
+        addr_set.count(static_cast<int*>(0)) == 0
+        && 
+        includes(addr_set.begin(), addr_set.end(), addr_set2.begin(), addr_set2.end())
+        , 
+        name
+    );
+}
+
+void test13()
+{
+    string name = "Test13";
+    buffer_allocator<int> allocator(100);
+    set<int*> addr_set;
+    for (size_t i = 0; i < 100; ++i)
+    {
+        addr_set.insert(allocator.new_element());
+    }
+    for (auto iter = addr_set.begin(); iter != addr_set.end(); advance(iter, 2))
+    {
+        allocator.delete_element(*iter);
+    }
+    set<int*> addr_set2;
+    for (size_t i = 0; i < 51; ++i)
+    {
+        addr_set2.insert(allocator.new_element());
+    }
+    printResult
+    (
+        allocator.new_element() == 0 
+        && 
+        addr_set2.size() == 51
+        && 
+        addr_set2.count(static_cast<int*>(0)) == 1
+        && 
+        !includes(addr_set.begin(), addr_set.end(), addr_set2.begin(), addr_set2.end())
+        , 
+        name
+    );
+}
+
 int main (int argc, char** argv) {
     test1();
     test2();
@@ -95,5 +240,12 @@ int main (int argc, char** argv) {
     test4();
     test5();
     test6();
+    test7();
+    test8();
+    test9();
+    test10();
+    test11();
+    test12();
+    test13();
     return 0;
 }

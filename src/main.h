@@ -13,6 +13,7 @@ using std::endl;
 using std::string;
 using std::set;
 using std::advance;
+using std::includes;
 
 using allocator_lib::buffer_allocator;
 

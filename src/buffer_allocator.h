@@ -7,6 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include <iterator>
+#include <iostream>
 
 namespace allocator_lib
 {
@@ -19,6 +20,8 @@ using std::bad_alloc;
 using std::unique_ptr;
 using std::min;
 using std::prev;
+using std::cerr;
+using std::endl;
 
 
 template <typename element_type> class buffer_allocator
@@ -113,32 +116,39 @@ typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new
 template <typename element_type>
 void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
 {
-    auto new_free_position = make_pair(address_, 1);
-    auto greater_addr_iter = m_free_space.upper_bound(new_free_position);
-    auto lower_addr_iter = m_free_space.begin();
-    if (greater_addr_iter == m_free_space.begin())
+    if (address_ < m_buffer.get() || address_ >= m_buffer.get() + m_capacity)
     {
-        lower_addr_iter = m_free_space.end();
+        std::cerr << "Adress " << address_ << " was not allocaded by this allocator." << std::endl;
     }
     else
     {
-        lower_addr_iter = prev(greater_addr_iter);
-    }
-    if (greater_addr_iter != m_free_space.end())
-    {
-        if (greater_addr_iter->first - 1 == address_)
+        auto new_free_position = make_pair(address_, 1);
+        auto greater_addr_iter = m_free_space.upper_bound(new_free_position);
+        auto lower_addr_iter = m_free_space.begin();
+        if (greater_addr_iter == m_free_space.begin())
         {
-            new_free_position = summ_descriptors(new_free_position, greater_addr_iter);
+            lower_addr_iter = m_free_space.end();
         }
-    }
-    if (lower_addr_iter != m_free_space.end())
-    {
-        if (lower_addr_iter->first + lower_addr_iter->second + 1 == address_)
+        else
         {
-            new_free_position = summ_descriptors(new_free_position, lower_addr_iter);
+            lower_addr_iter = prev(greater_addr_iter);
         }
+        if (greater_addr_iter != m_free_space.end())
+        {
+            if (greater_addr_iter->first - 1 == address_)
+            {
+                new_free_position = summ_descriptors(new_free_position, greater_addr_iter);
+            }
+        }
+        if (lower_addr_iter != m_free_space.end())
+        {
+            if (lower_addr_iter->first + lower_addr_iter->second + 1 == address_)
+            {
+                new_free_position = summ_descriptors(new_free_position, lower_addr_iter);
+            }
+        }
+        m_free_space.insert(new_free_position);
     }
-    m_free_space.insert(new_free_position);
 }
 
 template <typename element_type>
