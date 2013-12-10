@@ -5,6 +5,7 @@
 #include <set>
 #include <new>
 #include <memory>
+#include <limits>
 
 namespace allocator_lib
 {
@@ -15,6 +16,7 @@ using std::make_pair;
 using std::set;
 using std::bad_alloc;
 using std::unique_ptr;
+using std::numeric_limits;
 
 template <typename element_type> class buffer_allocator
 {
@@ -28,7 +30,7 @@ public:
     ~buffer_allocator();
 
     ptr new_element();
-    void delete_element(const_ptr_to_const element_);
+    void delete_element(const_ptr_to_const address_);
 
     void construct(ptr address_, const_ref element_) const;
     void destroy(ptr address_) const;
@@ -99,8 +101,24 @@ typename buffer_allocator<element_type>::ptr buffer_allocator<element_type>::new
 }
 
 template <typename element_type>
-void buffer_allocator<element_type>::delete_element(const_ptr_to_const element_)
+void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
 {
+    auto greater_addr_iter = m_free_space.upper_bound(make_pair(address_, numeric_limits<size_t>::max()));
+    auto lower_addr_iter = greater_addr_iter - 1;
+    if (greater_addr_iter != m_free_space.end())
+    {
+        if (greater_addr_iter->first - 1 == address_)
+        {
+            //склеить
+        }
+    }
+    if (lower_addr_iter != m_free_space.rend())
+    {
+        if (lower_addr_iter->first + 1 == address_)
+        {
+            //склеить
+        }
+    }
 
 }
 
