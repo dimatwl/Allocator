@@ -5,6 +5,7 @@
 #include <set>
 #include <new>
 #include <memory>
+#include <algorithm>
 
 namespace allocator_lib
 {
@@ -15,6 +16,7 @@ using std::make_pair;
 using std::set;
 using std::bad_alloc;
 using std::unique_ptr;
+using std::min;
 
 template <typename element_type> class buffer_allocator
 {
@@ -44,6 +46,12 @@ private:
     buffer_allocator();
     buffer_allocator(const buffer_allocator&);
     void operator=(const buffer_allocator&);
+
+    free_space_descriptor summ_descriptors
+    (
+        const free_space_descriptor& first_descriptor_, 
+        typename set<free_space_descriptor>::iterator second_descriptor_iter
+    );
 }; 
 
 template <typename element_type>
@@ -108,17 +116,29 @@ void buffer_allocator<element_type>::delete_element(const_ptr_to_const address_)
     {
         if (greater_addr_iter->first - 1 == address_)
         {
-            //склеить
+            new_free_position = summ_descriptors(new_free_position, greater_addr_iter);
         }
     }
     if (lower_addr_iter != m_free_space.rend())
     {
-        if (lower_addr_iter->first + 1 == address_)
+        if (lower_addr_iter->first + lower_addr_iter->second + 1 == address_)
         {
-            //склеить
+            new_free_position = summ_descriptors(new_free_position, lower_addr_iter);
         }
     }
     m_free_space.insert(new_free_position);
+}
+
+template <typename element_type>
+typename buffer_allocator<element_type>::free_space_descriptor buffer_allocator<element_type>::summ_descriptors
+(
+    const free_space_descriptor& first_descriptor_, 
+    typename set<free_space_descriptor>::iterator second_descriptor_iter
+)
+{
+    auto result = make_pair(min(first_descriptor_.first, second_descriptor_iter->first), first_descriptor_.second + second_descriptor_iter->second);
+    m_free_space.erase(second_descriptor_iter);
+    return result;
 }
 
 }
